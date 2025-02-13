@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Administrativo - Gestión de Ventas</title>
+  <style>
+    /* ============================
+       Variables de Colores y Fuentes (Modo Light)
+       ============================ */
+    :root {
+      --primary-color: #007bff;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --bg-color: #f8f9fa;
+      --text-color: #333;
+      --sidebar-bg: #343a40;
+      --sidebar-text: #fff;
+      --header-bg: #343a40;
+      --header-text: #fff;
+      --card-bg: #fff;
+      --card-shadow: rgba(0, 0, 0, 0.1);
+      --font-family: 'Segoe UI', system-ui, sans-serif;
+      --transition-speed: 0.3s;
+    }
+    /* Modo Oscuro */
+    .dark-mode {
+      --primary-color: #0d6efd;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --bg-color: #1e1e1e;
+      --text-color: #e0e0e0;
+      --sidebar-bg: #212529;
+      --sidebar-text: #e0e0e0;
+      --header-bg: #212529;
+      --header-text: #e0e0e0;
+      --card-bg: #2e2e2e;
+      --card-shadow: rgba(0, 0, 0, 0.3);
+    }
+    /* ============================
+       Reset y Estilos Globales
+       ============================ */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      font-size: 16px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      transition: background var(--transition-speed), color var(--transition-speed);
+    }
+    a { text-decoration: none; color: inherit; }
+    /* ============================
+       Pantalla de Acceso
+       ============================ */
+    #loginScreen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 4000;
+    }
+    #loginScreen input {
+      padding: 12px;
+      font-size: 1em;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      width: 250px;
+      margin-bottom: 15px;
+    }
+    #loginScreen button {
+      padding: 12px 20px;
+      font-size: 1em;
+      background: var(--primary-color);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      transition: background var(--transition-speed);
+    }
+    #loginScreen button:hover { opacity: 0.9; }
+    /* ============================
+       Contenedor Principal (Panel)
+       ============================ */
+    #app { display: none; height: 100vh; overflow: hidden; }
+    /* ============================
+       Menú Lateral
+       ============================ */
+    .sidebar {
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      width: 250px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      transition: left var(--transition-speed);
+    }
+    .sidebar-header {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar-header h2 { margin: 0; font-size: 1.3em; font-weight: 600; }
+    .close-sidebar {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      fill: var(--sidebar-text); width: 24px; height: 24px; display: none;
+    }
+    .menu { list-style: none; padding: 0; margin: 0; flex: 1; }
+    .menu li { border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .menu li a {
+      display: block; padding: 15px 20px; color: var(--sidebar-text);
+      transition: background var(--transition-speed);
+    }
+    .menu li a:hover, .menu li a.active {
+      background: rgba(255,255,255,0.1);
+    }
+    /* Botón de Salida en la parte inferior */
+    .menu li.exit { margin-top: auto; }
+    .menu li.exit a {
+      display: block;
+      text-align: center;
+      background: var(--danger-color);
+      border-radius: 6px;
+      padding: 12px 20px;
+      margin: 10px;
+    }
+    /* ============================
+       Contenido Principal
+       ============================ */
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+    header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 2em; font-weight: 600; }
+    .header-buttons { display: flex; align-items: center; gap: 10px; }
+    .open-sidebar {
+      background: none; border: none; color: var(--header-text);
+      font-size: 1.8em; cursor: pointer; display: none;
+    }
+    /* Switch Toggle para Tema */
+    .switch {
+      position: relative; display: inline-block; width: 50px; height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute; content: "";
+      height: 20px; width: 20px; left: 2px; bottom: 2px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    /* Botón "Sorprendeme" */
+    .random-style-btn {
+      background: var(--primary-color); border: none;
+      color: #fff; padding: 6px 10px; border-radius: 6px;
+      cursor: pointer; font-size: 0.9em; transition: background var(--transition-speed);
+    }
+    .random-style-btn:hover { opacity: 0.9; }
+    .main-content { padding: 20px; overflow-y: auto; }
+    .section {
+      background: var(--card-bg); padding: 25px; border-radius: 12px;
+      box-shadow: 0 4px 6px var(--card-shadow); margin-bottom: 20px;
+      transition: background var(--transition-speed);
+    }
+    h2, h3 { margin-top: 0; }
+    label { display: block; margin-top: 10px; font-weight: 600; }
+    input, select, textarea {
+      padding: 12px; margin: 8px 0; border: 1px solid #ddd;
+      border-radius: 6px; width: 100%; font-size: 1em;
+      transition: border-color var(--transition-speed);
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary-color);
+      box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
+    button {
+      padding: 12px 20px; border: none; border-radius: 6px;
+      background: var(--primary-color); color: #fff; cursor: pointer;
+      font-size: 1em; transition: background var(--transition-speed), transform var(--transition-speed);
+    }
+    button:hover { transform: translateY(-2px); }
+    .btn-confirm { background: var(--success-color); }
+    .btn-cancel { background: var(--danger-color); }
+    /* Cifras de Gestión de Caja: tamaños grandes y en negrita */
+    #cashStatusDisplay, #cashSummary {
+      font-size: 2em; font-weight: bold; text-align: center;
+    }
+    #cashDetails {
+      margin-top: 20px;
+      text-align: right;
+      font-size: 2em;
+      font-weight: bold;
+    }
+    /* Venta Actual: los ítems se alinean con el producto a la izquierda y el precio a la derecha */
+    .sale-summary ul li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.4em;
+      margin: 5px 0;
+    }
+    /* ============================
+       Inventario: Contenedor de tabla ocupa 80% de ancho, centrado
+       ============================ */
+    #inventoryTableContainer { width: 80%; margin: auto; }
+    #inventoryHistory td div { line-height: 1.2; }
+    /* ============================
+       Estilo para Alerta de Producto Estancado
+       ============================ */
+    .estancado {
+      color: red; font-weight: bold; font-size: 0.9em;
+    }
+    /* ============================
+       Filtros para Ventas
+       ============================ */
+    .filter-section {
+      margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-section input[type="text"],
+    .filter-section input[type="date"] {
+      flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 6px;
+    }
+    .filter-section button, .filter-section select {
+      padding: 12px 20px; border-radius: 6px; border: none;
+      background: var(--primary-color); color: #fff; cursor: pointer;
+    }
+    /* ============================
+       Modal de Confirmación de Venta (Estilo Ticket)
+       ============================ */
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; justify-content: center;
+      align-items: center; z-index: 2000;
+    }
+    .modal-content {
+      background: var(--card-bg); padding: 30px;
+      border-radius: 12px; width: 90%; max-width: 500px;
+      box-shadow: 0 4px 6px var(--card-shadow);
+      font-family: monospace;
+    }
+    .modal-actions {
+      margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;
+    }
+    /* En el modal, ítems estilo ticket: producto a la izquierda, precio a la derecha */
+    .ticket-item {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 1.2em; margin: 5px 0;
+    }
+    .modal-total {
+      text-align: right; font-size: 2em; font-weight: bold; margin-top: 15px;
+    }
+    /* Sección de Pago en el Modal */
+    #paymentSection label { margin-top: 15px; }
+    #changeDisplay { margin-top: 10px; font-weight: bold; }
+    /* ============================
+       Loading Overlay
+       ============================ */
+    #loadingOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4); display: none; align-items: center;
+      justify-content: center; z-index: 3000;
+    }
+    .spinner {
+      width: 60px; height: 60px; border: 6px solid #ccc;
+      border-top-color: var(--primary-color); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ============================
+       Responsive Styles
+       ============================ */
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      .sidebar {
+        position: absolute; left: -100%; top: 0; height: 100%; z-index: 1000;
+      }
+      .sidebar.active { left: 0; }
+      .open-sidebar { display: inline-block; }
+      .sidebar-header .close-sidebar { display: inline-block; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de Acceso -->
+  <div id="loginScreen">
+    <h2>Ingrese Código de Acceso</h2>
+    <input type="password" id="accessCodeInput" placeholder="Código de acceso" />
+    <button onclick="login()">Ingresar</button>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Panel Principal -->
+  <div id="app">
+    <!-- Menú Lateral -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Admin Panel</h2>
+        <button class="close-sidebar" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <ul class="menu">
+        <li><a href="#" class="menu-link active" data-section="caja">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle; margin-right:8px;">
+            <path fill="none" stroke="#fff" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline fill="none" stroke="#fff" stroke-width="2" points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Caja</a></li>
+        <li><a href="#" class="menu-link" data-section="ventas">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle; margin-right:8px;">
+            <path fill="none" stroke="#fff" stroke-width="2" d="M3 12l2-2 4 4 8-8 2 2"/>
+          </svg>
+          Ventas</a></li>
+        <li><a href="#" class="menu-link" data-section="inventario">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle; margin-right:8px;">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="#fff" stroke-width="2"/>
+            <line x1="3" y1="9" x2="21" y2="9" stroke="#fff" stroke-width="2"/>
+          </svg>
+          Inventario</a></li>
+        <li><a href="#" class="menu-link" data-section="agente">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle; margin-right:8px;">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2"/>
+            <path d="M12 8v4l3 3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Agente</a></li>
+        <li class="exit"><a href="#" onclick="logout()">Salir</a></li>
+      </ul>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <div class="content-wrapper">
+      <header>
+        <button class="open-sidebar" onclick="toggleSidebar()">☰</button>
+        <h1>Gestión de Ventas</h1>
+        <div class="header-buttons">
+          <label class="switch">
+            <input type="checkbox" id="themeSwitch" onchange="toggleDarkMode()">
+            <span class="slider round"></span>
+          </label>
+          <button class="random-style-btn" onclick="applyRandomStyle()">Sorprendeme</button>
+        </div>
+      </header>
+      <main class="main-content">
+        <!-- Sección Caja Registradora -->
+        <section id="section-caja" class="section">
+          <h2>🛒 Caja Registradora</h2>
+          <!-- Botones de Abrir/Cerrar Caja, ubicados en la parte superior -->
+          <div id="cashRegisterStatus" style="margin-bottom: 15px; text-align: center;">
+            <span id="cashStatusDisplay">Caja Cerrada</span>
+            <div style="margin-top:10px;">
+              <button id="openCashBtn" class="btn-confirm">Abrir Caja</button>
+              <button id="closeCashBtn" class="btn-cancel" style="display: none;">Cerrar Caja</button>
+            </div>
+          </div>
+          <!-- Lector de Código de Barras -->
+          <div class="barcode-input" style="margin-bottom: 20px;">
+            <label for="barcodeInput">O ingrese código de barras:</label>
+            <input type="text" id="barcodeInput" placeholder="Código de barras" />
+            <button id="scanBtn">Agregar por Código</button>
+          </div>
+          <!-- Venta Actual (principal, con lista de productos) -->
+          <div class="sale-summary" style="border: 2px solid var(--primary-color); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <h3 style="text-align:center; font-size:1.8em;">Venta Actual</h3>
+            <ul id="currentSale" style="min-height:100px;"></ul>
+            <div class="total-display" style="text-align:right; margin-top:15px;">Total: $<span id="totalSale">0.00</span></div>
+          </div>
+          <!-- Resumen de Caja (Monto Inicial y Ventas en Efectivo) -->
+          <div id="cashDetails"></div>
+          <!-- Sección para Agregar Productos -->
+          <div class="product-input" style="margin-top:20px;">
+            <label for="productSelect">Agregar Producto:</label>
+            <select id="productSelect"></select>
+            <label for="quantityInput">Cantidad:</label>
+            <input type="number" id="quantityInput" value="1" min="1" />
+            <button id="addProductBtn">Agregar Producto</button>
+          </div>
+          <hr />
+          <!-- Botones Finalizar/Cancelar Venta -->
+          <div class="sale-summary" style="margin-top:20px; text-align:center;">
+            <button id="finalizeSaleBtn" class="btn-confirm">Finalizar Venta</button>
+            <button id="cancelSaleBtn" class="btn-cancel">Cancelar Venta</button>
+          </div>
+        </section>
+
+        <!-- Sección Movimientos (Historial de Ventas) -->
+        <section id="section-ventas" class="section" style="display: none;">
+          <h2>📊 Movimientos de Caja</h2>
+          <div id="cashSummary"></div>
+          <div class="filter-section">
+            <select id="salesPeriodFilter">
+              <option value="all">Todo</option>
+              <option value="today">Hoy</option>
+              <option value="week">Esta Semana</option>
+              <option value="month">Este Mes</option>
+              <option value="custom">Personalizado</option>
+            </select>
+            <div id="customDateRange" style="display: none; gap: 10px;">
+              <input type="date" id="salesFromDate" />
+              <input type="date" id="salesToDate" />
+            </div>
+            <select id="salesPaymentFilter">
+              <option value="all">Todos los Métodos</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+            <input type="text" id="salesFilter" placeholder="Filtrar por ID o descripción" />
+            <button id="filterSalesBtn">Filtrar</button>
+            <button id="downloadSalesBtn">Descargar CSV</button>
+          </div>
+          <table id="salesHistory">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Método</th>
+                <th>Total</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <!-- Sección Inventario -->
+        <section id="section-inventario" class="section" style="display: none;">
+          <h2>📦 Inventario</h2>
+          <div style="margin-bottom: 10px;">
+            <label>
+              <input type="checkbox" id="stagnantAlertsToggle" checked />
+              Mostrar alertas de productos estancados
+            </label>
+          </div>
+          <div class="filter-section">
+            <input type="text" id="inventoryFilter" placeholder="Filtrar por código o nombre" />
+            <button id="filterInventoryBtn">Filtrar</button>
+            <button id="resetInventoryFilterBtn">Resetear Filtro</button>
+          </div>
+          <div id="inventoryTableContainer">
+            <table id="inventoryHistory">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                  <th>Días</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="inventory-actions" style="margin-top:20px;">
+            <h3 id="inventoryFormTitle">Agregar Nuevo Producto</h3>
+            <label for="newCode">Código:</label>
+            <input type="text" id="newCode" />
+            <label for="newName">Nombre:</label>
+            <input type="text" id="newName" />
+            <label for="newPrice">Precio:</label>
+            <input type="number" id="newPrice" step="0.01" />
+            <label for="newStock">Stock:</label>
+            <input type="number" id="newStock" />
+            <button id="saveProductBtn">Agregar Producto</button>
+            <button id="cancelEditBtn" class="btn-cancel" style="display: none;">Cancelar Edición</button>
+          </div>
+        </section>
+
+        <!-- Sección Agente -->
+        <section id="section-agente" class="section" style="display: none;">
+          <h2>👥 Agente</h2>
+          <div class="filter-section" style="gap: 10px;">
+            <button id="tabApi" class="btn-confirm" style="flex:1;">API Grouq</button>
+            <button id="tabChat" class="btn-confirm" style="flex:1;">Chat Agente</button>
+          </div>
+          <div id="apiSection">
+            <h3>Integrar API Key de Grouq</h3>
+            <label for="apiKeyInput">API Key:</label>
+            <input type="text" id="apiKeyInput" placeholder="Ingresa tu API Key de Grouq" />
+            <button id="saveApiKeyBtn" class="btn-confirm">Guardar API Key</button>
+          </div>
+          <div id="chatSection" style="display:none;">
+            <h3>Chat Agente</h3>
+            <div id="chatLog" style="border: 1px solid #ddd; border-radius: 6px; padding: 10px; height: 200px; overflow-y: auto; background: #fff;"></div>
+            <input type="text" id="chatInput" placeholder="Escribe tu pregunta..." />
+            <button id="sendChatBtn" class="btn-confirm">Enviar</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Venta (Ticket) -->
+  <div class="modal" id="saleModal">
+    <div class="modal-content">
+      <h2 style="text-align:center;">Confirmar Venta</h2>
+      <div id="modalSaleDetails"></div>
+      <div id="paymentSection">
+        <label for="paymentMethod">Método de Pago:</label>
+        <select id="paymentMethod">
+          <option value="Efectivo">Efectivo</option>
+          <option value="Tarjeta">Tarjeta</option>
+          <option value="Transferencia">Transferencia</option>
+        </select>
+        <label for="amountPaid">Monto Pagado:</label>
+        <input type="number" id="amountPaid" placeholder="Ingrese monto pagado" />
+        <div id="changeDisplay"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirmSaleBtn" class="btn-confirm">Confirmar</button>
+        <button id="cancelModalBtn" class="btn-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**********************
+     * Variables Globales *
+     **********************/
+    let inventory = {};
+    let salesHistory = [];
+    let saleIdCounter = 1;
+    let currentSale = [];
+    let editingProductCode = null;
+    let cashRegister = { isOpen: false, initialAmount: 0, cashSales: 0 };
+    let showStagnantAlerts = true;
+
+    /************************************
+     * Funciones de Carga y Persistencia *
+     ************************************/
+    function loadData() {
+      const now = Date.now();
+      const storedInventory = localStorage.getItem('inventory');
+      if (storedInventory) { inventory = JSON.parse(storedInventory); }
+      else {
+        inventory = {
+          "1001": { code: "1001", name: "Producto A", price: 12.50, stock: 15, addedDate: now - 16*24*60*60*1000 },
+          "1002": { code: "1002", name: "Producto B", price: 20.00, stock: 8, addedDate: now },
+          "1003": { code: "1003", name: "Producto C", price: 8.75, stock: 20, addedDate: now },
+          "1004": { code: "1004", name: "Producto D", price: 15.00, stock: 10, addedDate: now },
+          "1005": { code: "1005", name: "Producto E", price: 25.00, stock: 5, addedDate: now }
+        };
+        localStorage.setItem('inventory', JSON.stringify(inventory));
+      }
+      const storedSalesHistory = localStorage.getItem('salesHistory');
+      if (storedSalesHistory) { salesHistory = JSON.parse(storedSalesHistory); }
+      else { salesHistory = []; localStorage.setItem('salesHistory', JSON.stringify(salesHistory)); }
+      const storedSaleIdCounter = localStorage.getItem('saleIdCounter');
+      if (storedSaleIdCounter) { saleIdCounter = parseInt(storedSaleIdCounter); }
+      else { saleIdCounter = 1; localStorage.setItem('saleIdCounter', saleIdCounter); }
+      const storedCash = localStorage.getItem('cashRegister');
+      if (storedCash) { cashRegister = JSON.parse(storedCash); updateCashStatusDisplay(); }
+      const storedApiKey = localStorage.getItem('groqApiKey');
+      if (storedApiKey) { document.getElementById('apiKeyInput').value = storedApiKey; }
+    }
+    function saveData() {
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+      localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+      localStorage.setItem('saleIdCounter', saleIdCounter);
+      localStorage.setItem('cashRegister', JSON.stringify(cashRegister));
+    }
+
+    /************************************
+     * Funciones para Actualizar Vistas *
+     ************************************/
+    function updateProductSelect() {
+      const productSelect = document.getElementById('productSelect');
+      productSelect.innerHTML = '';
+      for (const code in inventory) {
+        const product = inventory[code];
+        productSelect.innerHTML += `<option value="${product.code}">${product.name} - $${product.price.toFixed(2)} (Stock: ${product.stock})</option>`;
+      }
+    }
+    function updateCurrentSale() {
+      const currentSaleList = document.getElementById('currentSale');
+      currentSaleList.innerHTML = '';
+      currentSale.forEach((item, index) => {
+        currentSaleList.innerHTML += `
+          <li style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="flex:1; text-align:left;">${item.name} x${item.quantity}</span>
+            <span style="text-align:right;">$${(item.price * item.quantity).toFixed(2)}</span>
+            <button style="margin-left:10px;" onclick="removeItem(${index})">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="none" stroke="currentColor" stroke-width="2" d="M18 6L6 18"/>
+                <path fill="none" stroke="currentColor" stroke-width="2" d="M6 6L18 18"/>
+              </svg>
+            </button>
+          </li>`;
+      });
+      const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('totalSale').innerText = total.toFixed(2);
+    }
+    function removeItem(index) {
+      currentSale.splice(index, 1);
+      updateCurrentSale();
+    }
+    function updateSalesHistoryTable(filterText = '') {
+      const tbody = document.querySelector('#salesHistory tbody');
+      tbody.innerHTML = '';
+      let filteredSales = salesHistory.slice();
+      const period = document.getElementById('salesPeriodFilter').value;
+      let from = null, to = null;
+      const now = new Date();
+      if (period === "today") {
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        to = new Date(from); to.setDate(to.getDate() + 1);
+      } else if (period === "week") {
+        const day = now.getDay();
+        from = new Date(now); from.setDate(now.getDate() - day + 1); from.setHours(0, 0, 0, 0);
+        to = new Date(from); to.setDate(to.getDate() + 7);
+      } else if (period === "month") {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      } else if (period === "custom") {
+        const fromDate = document.getElementById('salesFromDate').value;
+        const toDate = document.getElementById('salesToDate').value;
+        if (fromDate && toDate) { from = new Date(fromDate); to = new Date(toDate); to.setDate(to.getDate() + 1); }
+      }
+      if (from && to) { filteredSales = filteredSales.filter(sale => sale.timestamp >= from.getTime() && sale.timestamp < to.getTime()); }
+      const paymentFilter = document.getElementById('salesPaymentFilter').value;
+      if (paymentFilter !== "all") { filteredSales = filteredSales.filter(sale => sale.paymentMethod === paymentFilter); }
+      if (filterText) {
+        filterText = filterText.toLowerCase();
+        filteredSales = filteredSales.filter(sale =>
+          sale.id.toString().includes(filterText) ||
+          sale.description.toLowerCase().includes(filterText)
+        );
+      }
+      filteredSales.sort((a, b) => b.timestamp - a.timestamp);
+      filteredSales.forEach(sale => {
+        tbody.innerHTML += `<tr>
+          <td>${sale.id}</td>
+          <td>${sale.date}</td>
+          <td>${sale.paymentMethod}</td>
+          <td>$${sale.total.toFixed(2)}</td>
+          <td>${sale.description}</td>
+        </tr>`;
+      });
+      updateCajaSummary();
+    }
+    function updateCajaSummary() {
+      let total = 0, efectivo = 0, tarjeta = 0, transferencia = 0;
+      salesHistory.forEach(sale => {
+        total += sale.total;
+        if (sale.paymentMethod === "Efectivo") efectivo += sale.total;
+        if (sale.paymentMethod === "Tarjeta") tarjeta += sale.total;
+        if (sale.paymentMethod === "Transferencia") transferencia += sale.total;
+      });
+      document.getElementById('cashSummary').innerText =
+        `Total Vendido: $${total.toFixed(2)}\nEfectivo: $${efectivo.toFixed(2)}\nTarjeta: $${tarjeta.toFixed(2)}\nTransferencia: $${transferencia.toFixed(2)}`;
+    }
+    function updateInventoryTable(filterText = '') {
+      const tbody = document.querySelector('#inventoryHistory tbody');
+      tbody.innerHTML = '';
+      filterText = filterText.toLowerCase();
+      const today = Date.now();
+      for (const code in inventory) {
+        const product = inventory[code];
+        if (filterText && !(product.code.toLowerCase().includes(filterText) || product.name.toLowerCase().includes(filterText))) continue;
+        const days = Math.floor((today - product.addedDate) / (1000 * 60 * 60 * 24));
+        let daysDisplay = `<div>Días:</div><div>${days} días</div>`;
+        if (days > 15 && showStagnantAlerts) { daysDisplay += `<div class="estancado">Estancado</div>`; }
+        tbody.innerHTML += `<tr>
+          <td>${product.code}</td>
+          <td>${product.name}</td>
+          <td><div>Precio:</div><div>$${product.price.toFixed(2)}</div></td>
+          <td><div>Stock:</div><div>${product.stock}</div></td>
+          <td>${daysDisplay}</td>
+          <td>
+            <button onclick="editProduct('${product.code}')" title="Editar">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="none" stroke="#fff" stroke-width="2" d="M12 20h9"/>
+                <path fill="none" stroke="#fff" stroke-width="2" d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+              </svg>
+            </button>
+            <button onclick="deleteProduct('${product.code}')" title="Eliminar">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="none" stroke="#fff" stroke-width="2" d="M3 6h18"/>
+                <path fill="none" stroke="#fff" stroke-width="2" d="M8 6V4h8v2"/>
+                <path fill="none" stroke="#fff" stroke-width="2" d="M10 11v6"/>
+                <path fill="none" stroke="#fff" stroke-width="2" d="M14 11v6"/>
+              </svg>
+            </button>
+            <button onclick="adjustStock('${product.code}', 1)" title="Aumentar Stock">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <line x1="12" y1="5" x2="12" y2="19" stroke="#fff" stroke-width="2"/>
+                <line x1="5" y1="12" x2="19" y2="12" stroke="#fff" stroke-width="2"/>
+              </svg>
+            </button>
+            <button onclick="adjustStock('${product.code}', -1)" title="Disminuir Stock">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <line x1="5" y1="12" x2="19" y2="12" stroke="#fff" stroke-width="2"/>
+              </svg>
+            </button>
+          </td>
+        </tr>`;
+      }
+    }
+    /* =============================
+       Funciones CRUD para Inventario
+       ============================= */
+    function addOrUpdateProduct() {
+      const code = document.getElementById('newCode').value.trim();
+      const name = document.getElementById('newName').value.trim();
+      const price = parseFloat(document.getElementById('newPrice').value);
+      const stock = parseInt(document.getElementById('newStock').value);
+      if (!code || !name || isNaN(price) || isNaN(stock)) { alert('Complete todos los campos correctamente'); return; }
+      if (editingProductCode) {
+        if (code !== editingProductCode && inventory[code]) { alert('El código ya existe en otro producto.'); return; }
+        const prevDate = inventory[editingProductCode].addedDate;
+        delete inventory[editingProductCode];
+        inventory[code] = { code, name, price, stock, addedDate: prevDate || Date.now() };
+        editingProductCode = null;
+        document.getElementById('inventoryFormTitle').innerText = "Agregar Nuevo Producto";
+        document.getElementById('saveProductBtn').innerText = "Agregar Producto";
+        document.getElementById('cancelEditBtn').style.display = "none";
+      } else {
+        if (inventory[code]) { alert('El producto ya existe'); return; }
+        inventory[code] = { code, name, price, stock, addedDate: Date.now() };
+      }
+      updateInventoryTable(document.getElementById('inventoryFilter').value);
+      updateProductSelect();
+      clearProductForm();
+      saveData();
+      alert('Producto guardado correctamente');
+    }
+    function editProduct(code) {
+      const product = inventory[code];
+      if (!product) return;
+      editingProductCode = code;
+      document.getElementById('newCode').value = product.code;
+      document.getElementById('newName').value = product.name;
+      document.getElementById('newPrice').value = product.price;
+      document.getElementById('newStock').value = product.stock;
+      document.getElementById('inventoryFormTitle').innerText = "Editar Producto";
+      document.getElementById('saveProductBtn').innerText = "Actualizar Producto";
+      document.getElementById('cancelEditBtn').style.display = "inline-block";
+    }
+    function deleteProduct(code) {
+      if (confirm("¿Seguro que desea eliminar este producto?")) {
+        delete inventory[code];
+        updateInventoryTable(document.getElementById('inventoryFilter').value);
+        updateProductSelect();
+        saveData();
+      }
+    }
+    function clearProductForm() {
+      document.getElementById('newCode').value = '';
+      document.getElementById('newName').value = '';
+      document.getElementById('newPrice').value = '';
+      document.getElementById('newStock').value = '';
+    }
+    function adjustStock(code, delta) {
+      if (inventory[code]) {
+        const newStock = inventory[code].stock + delta;
+        if (newStock < 0) { alert('El stock no puede ser negativo'); return; }
+        inventory[code].stock = newStock;
+        updateInventoryTable(document.getElementById('inventoryFilter').value);
+        updateProductSelect();
+        saveData();
+      }
+    }
+    /* =============================
+       Funciones para Caja y Ventas
+       ============================= */
+    function updateCashStatusDisplay() {
+      const display = document.getElementById('cashStatusDisplay');
+      const openBtn = document.getElementById('openCashBtn');
+      const closeBtn = document.getElementById('closeCashBtn');
+      if (cashRegister.isOpen) {
+        display.innerText = `Caja Abierta`;
+        openBtn.style.display = 'none';
+        closeBtn.style.display = 'inline-block';
+        updateCashDetails();
+      } else {
+        display.innerText = "Caja Cerrada";
+        openBtn.style.display = 'inline-block';
+        closeBtn.style.display = 'none';
+        document.getElementById('cashDetails').innerHTML = "";
+      }
+    }
+    function updateCashDetails() {
+      const details = document.getElementById('cashDetails');
+      if (cashRegister.isOpen) {
+        details.innerHTML = `<p>Monto Inicial de Caja: $${cashRegister.initialAmount.toFixed(2)}</p>
+                             <p>Ventas en Efectivo: $${cashRegister.cashSales.toFixed(2)}</p>`;
+      }
+    }
+    document.getElementById('openCashBtn').addEventListener('click', () => {
+      let initial = prompt("Ingrese el monto inicial de caja:");
+      initial = parseFloat(initial);
+      if (isNaN(initial) || initial < 0) { alert("Monto inválido"); return; }
+      cashRegister.isOpen = true;
+      cashRegister.initialAmount = initial;
+      cashRegister.cashSales = 0;
+      updateCashStatusDisplay();
+      saveData();
+    });
+    document.getElementById('closeCashBtn').addEventListener('click', () => {
+      if (!confirm("¿Desea cerrar la caja?")) return;
+      const finalTotal = cashRegister.initialAmount + cashRegister.cashSales;
+      alert(`Caja cerrada.\nTotal en caja: $${finalTotal.toFixed(2)}\nVentas en efectivo: $${cashRegister.cashSales.toFixed(2)}`);
+      cashRegister.isOpen = false;
+      updateCashStatusDisplay();
+      saveData();
+    });
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    function showConfirmationModal() {
+      const modal = document.getElementById('saleModal');
+      const details = document.getElementById('modalSaleDetails');
+      let html = '';
+      currentSale.forEach(item => {
+        html += `<div class="ticket-item">
+                   <span>${item.name} x${item.quantity}</span>
+                   <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                 </div>`;
+      });
+      details.innerHTML = html;
+      const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      details.innerHTML += `<div class="modal-total">Total: $${total.toFixed(2)}</div>`;
+      document.getElementById('paymentMethod').value = "Efectivo";
+      document.getElementById('amountPaid').value = "";
+      document.getElementById('changeDisplay').innerText = "";
+      modal.style.display = 'flex';
+    }
+    function confirmSale() {
+      showLoading();
+      setTimeout(() => {
+        const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const amountPaid = parseFloat(document.getElementById('amountPaid').value);
+        let change = 0;
+        if (paymentMethod === "Efectivo") {
+          if (isNaN(amountPaid) || amountPaid < total) {
+            alert("El monto pagado es insuficiente para cubrir la venta.");
+            hideLoading();
+            return;
+          }
+          change = amountPaid - total;
+          if (cashRegister.isOpen) {
+            cashRegister.cashSales += total;
+            updateCashStatusDisplay();
+          }
+        }
+        const description = currentSale.map(item => `${item.name} x${item.quantity} ($${(item.price * item.quantity).toFixed(2)})`).join(", ");
+        const timestamp = Date.now();
+        const sale = {
+          id: saleIdCounter++,
+          products: [...currentSale],
+          total,
+          date: new Date(timestamp).toLocaleString(),
+          timestamp,
+          description,
+          paymentMethod,
+          amountPaid: paymentMethod === "Efectivo" ? amountPaid : 0,
+          change
+        };
+        currentSale.forEach(item => { if (inventory[item.code]) { inventory[item.code].stock -= item.quantity; } });
+        salesHistory.push(sale);
+        currentSale = [];
+        updateSalesHistoryTable(document.getElementById('salesFilter').value);
+        updateInventoryTable(document.getElementById('inventoryFilter').value);
+        updateCurrentSale();
+        updateProductSelect();
+        saveData();
+        document.getElementById('saleModal').style.display = 'none';
+        hideLoading();
+        alert(`Venta confirmada correctamente. ${paymentMethod === "Efectivo" ? "Vuelto: $" + change.toFixed(2) : ""}`);
+      }, 1000);
+    }
+    function cancelSaleModal() { document.getElementById('saleModal').style.display = 'none'; }
+    document.getElementById('amountPaid').addEventListener('input', function() {
+      const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const amountPaid = parseFloat(this.value);
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      if (paymentMethod === "Efectivo" && !isNaN(amountPaid)) {
+        const change = amountPaid - total;
+        document.getElementById('changeDisplay').innerText = change >= 0 ? "Vuelto: $" + change.toFixed(2) : "Monto insuficiente";
+      } else { document.getElementById('changeDisplay').innerText = ""; }
+    });
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+      if (this.value !== "Efectivo") { document.getElementById('changeDisplay').innerText = ""; }
+      else {
+        const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const amountPaid = parseFloat(document.getElementById('amountPaid').value);
+        if (!isNaN(amountPaid)) {
+          const change = amountPaid - total;
+          document.getElementById('changeDisplay').innerText = change >= 0 ? "Vuelto: $" + change.toFixed(2) : "Monto insuficiente";
+        }
+      }
+    });
+    /* =============================
+       Función para Exportar CSV
+       ============================= */
+    function downloadCSV() {
+      let csv = "ID,Fecha,Total,Método,Descripción\r\n";
+      salesHistory.forEach(sale => {
+        csv += `${sale.id},"${sale.date}",${sale.total.toFixed(2)},${sale.paymentMethod},"${sale.description}"\r\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "reporte_ventas.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    /* =============================
+       Función para Aplicar Estilo Aleatorio (Sorprendeme)
+       ============================= */
+    function applyRandomStyle() {
+      const themes = [
+        { primary: "#e91e63", header: "#c2185b", sidebar: "#880e4f", card: "#f8bbd0" },
+        { primary: "#9c27b0", header: "#6a1b9a", sidebar: "#4a148c", card: "#e1bee7" },
+        { primary: "#3f51b5", header: "#303f9f", sidebar: "#1a237e", card: "#c5cae9" },
+        { primary: "#4caf50", header: "#388e3c", sidebar: "#1b5e20", card: "#c8e6c9" },
+        { primary: "#ff9800", header: "#f57c00", sidebar: "#e65100", card: "#ffe0b2" }
+      ];
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+      document.documentElement.style.setProperty('--primary-color', randomTheme.primary);
+      document.documentElement.style.setProperty('--header-bg', randomTheme.header);
+      document.documentElement.style.setProperty('--sidebar-bg', randomTheme.sidebar);
+      document.documentElement.style.setProperty('--card-bg', randomTheme.card);
+    }
+    /* =============================
+       Funciones para Filtrar Ventas por Período y Método
+       ============================= */
+    document.getElementById('salesPeriodFilter').addEventListener('change', function() {
+      const customDiv = document.getElementById('customDateRange');
+      customDiv.style.display = (this.value === "custom") ? "flex" : "none";
+    });
+    /* =============================
+       Funciones para Toggle de Alertas en Inventario
+       ============================= */
+    document.getElementById('stagnantAlertsToggle').addEventListener('change', function() {
+      showStagnantAlerts = this.checked;
+      updateInventoryTable(document.getElementById('inventoryFilter').value);
+    });
+    /* =============================
+       Funciones para la Sección Agente
+       ============================= */
+    document.getElementById('tabApi').addEventListener('click', () => {
+      document.getElementById('apiSection').style.display = 'block';
+      document.getElementById('chatSection').style.display = 'none';
+      document.getElementById('tabApi').classList.add('btn-confirm');
+      document.getElementById('tabChat').classList.remove('btn-confirm');
+    });
+    document.getElementById('tabChat').addEventListener('click', () => {
+      document.getElementById('apiSection').style.display = 'none';
+      document.getElementById('chatSection').style.display = 'block';
+      document.getElementById('tabChat').classList.add('btn-confirm');
+      document.getElementById('tabApi').classList.remove('btn-confirm');
+    });
+    document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (!apiKey) { alert("Ingrese la API Key."); return; }
+      localStorage.setItem('groqApiKey', apiKey);
+      alert("API Key guardada correctamente.");
+    });
+    document.getElementById('sendChatBtn').addEventListener('click', () => {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+      const chatLog = document.getElementById('chatLog');
+      const p = document.createElement('p');
+      p.innerText = "Usuario: " + message;
+      chatLog.appendChild(p);
+      input.value = "";
+      setTimeout(() => {
+        const p2 = document.createElement('p');
+        p2.innerText = "Agente: Lo siento, aún estoy en desarrollo.";
+        chatLog.appendChild(p2);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }, 1000);
+    });
+    /* =============================
+       Funciones para Pantalla de Acceso y Salida
+       ============================= */
+    function login() {
+      const code = document.getElementById('accessCodeInput').value.trim();
+      if (code === "123456") {
+        document.getElementById('loginScreen').style.display = "none";
+        document.getElementById('app').style.display = "flex";
+      } else {
+        alert("Código incorrecto. Intente nuevamente.");
+      }
+    }
+    function logout() {
+      if (confirm("¿Desea salir del panel?")) {
+        document.getElementById('app').style.display = "none";
+        document.getElementById('loginScreen').style.display = "flex";
+        document.getElementById('accessCodeInput').value = "";
+      }
+    }
+    /* =============================
+       Función para Alternar Tema Claro/Oscuro
+       ============================= */
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+    /* =============================
+       Función para Alternar Menú Lateral
+       ============================= */
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('active');
+    }
+    /* =============================
+       Eventos y Lógica General
+       ============================= */
+    document.getElementById('addProductBtn').addEventListener('click', () => {
+      const productCode = document.getElementById('productSelect').value;
+      const quantity = parseInt(document.getElementById('quantityInput').value);
+      if (!productCode || isNaN(quantity) || quantity < 1) { alert('Seleccione un producto y una cantidad válida'); return; }
+      const product = inventory[productCode];
+      if (product.stock < quantity) { alert('No hay suficiente stock'); return; }
+      const existing = currentSale.find(item => item.code === productCode);
+      if (existing) {
+        if (existing.quantity + quantity <= product.stock) { existing.quantity += quantity; }
+        else { alert('No hay suficiente stock'); return; }
+      } else { currentSale.push({ ...product, quantity }); }
+      updateCurrentSale();
+    });
+    document.getElementById('scanBtn').addEventListener('click', () => {
+      const code = document.getElementById('barcodeInput').value.trim();
+      if (!code) return;
+      if (!inventory[code]) { alert('Producto no encontrado'); return; }
+      const product = inventory[code];
+      if (product.stock <= 0) { alert('Producto sin stock'); return; }
+      const existing = currentSale.find(item => item.code === code);
+      if (existing) {
+        if (existing.quantity < product.stock) { existing.quantity++; }
+        else { alert('No hay suficiente stock'); return; }
+      } else { currentSale.push({ ...product, quantity: 1 }); }
+      updateCurrentSale();
+      document.getElementById('barcodeInput').value = '';
+    });
+    document.getElementById('finalizeSaleBtn').addEventListener('click', () => {
+      if (currentSale.length === 0) { alert('No hay productos en la venta'); return; }
+      showConfirmationModal();
+    });
+    document.getElementById('cancelSaleBtn').addEventListener('click', () => {
+      if (confirm('¿Desea cancelar la venta actual?')) { currentSale = []; updateCurrentSale(); }
+    });
+    document.getElementById('confirmSaleBtn').addEventListener('click', confirmSale);
+    document.getElementById('cancelModalBtn').addEventListener('click', cancelSaleModal);
+    document.getElementById('filterSalesBtn').addEventListener('click', () => {
+      const filterText = document.getElementById('salesFilter').value;
+      updateSalesHistoryTable(filterText);
+    });
+    document.getElementById('downloadSalesBtn').addEventListener('click', downloadCSV);
+    document.getElementById('filterInventoryBtn').addEventListener('click', () => {
+      const filterText = document.getElementById('inventoryFilter').value;
+      updateInventoryTable(filterText);
+    });
+    document.getElementById('resetInventoryFilterBtn').addEventListener('click', () => {
+      document.getElementById('inventoryFilter').value = '';
+      updateInventoryTable();
+    });
+    document.getElementById('saveProductBtn').addEventListener('click', addOrUpdateProduct);
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+      editingProductCode = null;
+      clearProductForm();
+      document.getElementById('inventoryFormTitle').innerText = "Agregar Nuevo Producto";
+      document.getElementById('saveProductBtn').innerText = "Agregar Producto";
+      document.getElementById('cancelEditBtn').style.display = "none";
+    });
+    const menuLinks = document.querySelectorAll('.menu-link');
+    menuLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        menuLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        const sectionToShow = link.getAttribute('data-section');
+        document.querySelectorAll('main .section').forEach(section => { section.style.display = 'none'; });
+        document.getElementById('section-' + sectionToShow).style.display = 'block';
+      });
+    });
+    /***********************
+     * Inicialización      *
+     ***********************/
+    loadData();
+    updateProductSelect();
+    updateSalesHistoryTable();
+    updateInventoryTable();
+    updateCashStatusDisplay();
+  </script>
+</body>
+</html>
